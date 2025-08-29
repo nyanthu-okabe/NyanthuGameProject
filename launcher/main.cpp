@@ -1,9 +1,10 @@
 #include "raylib.h"
+#include <cstdlib>
 #include <string>
 #include <math.h>
 
 // シーン定義
-enum class Scene { Home, Play, Setting };
+enum class Scene { Home, Play, Setting, Runing, Setting__ed, Runing__ed };
 
 // シーン管理クラス
 class WindowManager {
@@ -11,8 +12,9 @@ public:
     Scene status = Scene::Home;
 
     void goto_play()    { status = Scene::Play; }
-    void goto_setting() { status = Scene::Setting; }
+    void goto_setting() { status = Scene::Setting__ed; }
     void goto_home()    { status = Scene::Home; }
+    void now_runing()    { status = Scene::Runing__ed; }
 
     void update() {
         if (IsKeyDown(KEY_E)) status = Scene::Home;
@@ -21,8 +23,16 @@ public:
     void draw() {
         if (status == Scene::Setting) {
             DrawText("Settings Screen (press E to return)", 20, 20, 20, BLACK);
+            std::string command = std::string("open ../../data/setting/setting.json");
+            int result = system(command.c_str());
+            goto_setting();//呼び出し重複防止
         } else if (status == Scene::Play) {
-            DrawText("The game is start up (press E to return)", 20, 20, 20, BLACK);
+            std::string command = std::string("open ../../build/app/game");
+            int result = system(command.c_str());
+            now_runing();//呼び出し重複防止
+
+        } else if (status == Scene::Runing) {
+            DrawText("The Game is running (press E to return)", 20, 20, 20, BLACK);
         }
     }
 };
