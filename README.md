@@ -1,7 +1,7 @@
 # Nyanthu Game Project System Structure
 
 This document outlines the system architecture of the "Nyanthu Game" project, which is built around a custom game engine named "nyanthu_engine". The project is primarily written in C++ and uses CMake as its build system.
-![image](./s2.png)
+![image](./s3.png)
 ![image](./s.png)
 
 ## 1. Project Overview
