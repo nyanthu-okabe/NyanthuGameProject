@@ -1,41 +1,14 @@
 #include "raylib.h"
 #include <cstdlib>
+#include <iostream>
 #include <string>
 #include <math.h>
 
 // シーン定義
-enum class Scene { Home, Play, Setting, Runing, Setting__ed, Runing__ed };
+enum class Scene { Home, Play, Setting, Runing, Setting__ed, Runing__ed, Readme};
 
 // シーン管理クラス
-class WindowManager {
-public:
-    Scene status = Scene::Home;
 
-    void goto_play()    { status = Scene::Play; }
-    void goto_setting() { status = Scene::Setting__ed; }
-    void goto_home()    { status = Scene::Home; }
-    void now_runing()    { status = Scene::Runing__ed; }
-
-    void update() {
-        if (IsKeyDown(KEY_E)) status = Scene::Home;
-    }
-
-    void draw() {
-        if (status == Scene::Setting) {
-            DrawText("Settings Screen (press E to return)", 20, 20, 20, BLACK);
-            std::string command = std::string("open ../../data/setting/setting.json");
-            int result = system(command.c_str());
-            goto_setting();//呼び出し重複防止
-        } else if (status == Scene::Play) {
-            std::string command = std::string("open ../../build/app/game");
-            int result = system(command.c_str());
-            now_runing();//呼び出し重複防止
-
-        } else if (status == Scene::Runing) {
-            DrawText("The Game is running (press E to return)", 20, 20, 20, BLACK);
-        }
-    }
-};
 
 // ボタンクラス
 class Button {
@@ -71,7 +44,39 @@ public:
         return hovered && IsMouseButtonPressed(MOUSE_LEFT_BUTTON);
     }
 };
+class WindowManager {
+public:
+    Scene status = Scene::Home;
 
+    void goto_play()    { status = Scene::Play; }
+    void goto_setting() { status = Scene::Setting__ed; }
+    void goto_home()    { status = Scene::Home; }
+    void now_runing()    { status = Scene::Runing__ed; }
+    void goto_mysite() { status = Scene::Readme;}
+
+    void update() {
+        if (IsKeyDown(KEY_E)) status = Scene::Home;
+    }
+
+    void draw(Button& btn_s, Vector2 mousePoint) {
+        if (status == Scene::Setting) {
+            DrawText("Settings Screen (press E to return)", 20, 20, 20, BLACK);
+            std::string command = std::string("open ../../data/setting/setting.json");
+            int result = system(command.c_str());
+            goto_setting();//呼び出し重複防止
+        } else if (status == Scene::Play) {
+            std::string command = std::string("open ../../build/app/game");
+            int result = system(command.c_str());
+            now_runing();//呼び出し重複防止
+
+        } else if (status == Scene::Runing) {
+            DrawText("The Game is running (press E to return)", 20, 20, 20, BLACK);
+        } else if (status == Scene::Readme) {
+            DrawText("Info (press E to return)\n\nThis Game is made Nyanthu okabe\nCopyright (c) 2025 Nyanchu", 20, 20, 20, BLACK);
+            if (btn_s.Draw(mousePoint)) {std::system("open https://github.com/nyanthu-okabe/");}
+        }
+    }
+};
 int main() {
     InitWindow(800, 600, "NyanthuGame Settings");
     SetTargetFPS(60);
@@ -79,6 +84,8 @@ int main() {
     Button btn1({200, 250, 400, 60}, "Play");
     Button btn2({200, 330, 400, 60}, "Settings");
     Button btn3({200, 410, 400, 60}, "Exit");
+    Button btn4({600, 410, 60, 60}, "@");
+    Button btn_s({30, 250, 120, 60}, "Github");
 
     WindowManager window;
 
@@ -116,10 +123,11 @@ int main() {
             if (btn1.Draw(mousePoint)) window.goto_play();
             if (btn2.Draw(mousePoint)) window.goto_setting();
             if (btn3.Draw(mousePoint)) { CloseWindow(); return 0; }
+            if (btn4.Draw(mousePoint)) window.goto_mysite();
 
         } else {
             window.update();
-            window.draw();
+            window.draw(btn_s, mousePoint);
         }
 
         EndDrawing();
