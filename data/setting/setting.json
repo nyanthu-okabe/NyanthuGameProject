@@ -1,6 +1,6 @@
 {
-  "language" : "Japanese",
-  "enable_mods" : {
+  "language": "Japanese",
+  "enable_mods": [
     "default.lua"
-  }
+  ]
 }
