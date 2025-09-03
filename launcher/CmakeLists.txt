@@ -14,7 +14,11 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(raylib)
 
-add_executable(main main.cpp)
+add_executable(main src/main.cpp src/WindowManager.cpp)
+target_include_directories(main PRIVATE 
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+)
 
 # raylib をリンク
 target_link_libraries(main PRIVATE raylib)
