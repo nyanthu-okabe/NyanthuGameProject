@@ -63,11 +63,11 @@ void Engine::pollEvents() {
 }
 
 void Engine::beginFrame() {
-    // Nothing for now
+    m_renderer->beginFrame();
 }
 
 void Engine::endFrame() {
-    m_renderer->render(); // This will contain the bgfx::frame() call
+    m_renderer->endFrame();
     glfwSwapBuffers(m_window);
 }
 

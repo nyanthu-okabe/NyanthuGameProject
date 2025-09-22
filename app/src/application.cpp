@@ -23,9 +23,8 @@ void Application::run()
         m_engine->pollEvents();
         m_engine->beginFrame();
 
-        // From design doc
-        m_engine->getRenderer().drawMesh("/Users/riookabe/Desktop/nyanthu/nyanthu - game/project_back/application/materials/con.obj");
-        m_engine->getAudio().playSound("/Users/riookabe/Desktop/nyanthu/nyanthu - game/project_back/application/materials/bgm.wav");
+        // App decides what to draw
+        m_engine->getRenderer().drawTriangle();
 
         m_engine->endFrame();
     }

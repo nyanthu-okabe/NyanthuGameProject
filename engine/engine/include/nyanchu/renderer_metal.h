@@ -7,6 +7,8 @@ struct GLFWwindow;
 
 namespace nyanchu {
 
+class RendererMetalImpl;
+
 class RendererMetal : public IRenderer
 {
 public:
@@ -14,10 +16,16 @@ public:
     ~RendererMetal() override;
 
     bool initialize(GLFWwindow* window, uint32_t width, uint32_t height) override;
-    void render() override;
     void shutdown() override;
 
+    void beginFrame() override;
+    void endFrame() override;
+
     void drawMesh(const char* meshName) override;
+    void drawTriangle() override;
+
+private:
+    class RendererMetalImpl* _impl;
 };
 
 } // namespace nyanchu

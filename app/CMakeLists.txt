@@ -42,3 +42,11 @@ add_custom_command(
     ${CMAKE_SOURCE_DIR}/engine/shaders
     $<TARGET_FILE_DIR:game>/shaders
 )
+
+add_custom_command(
+    TARGET game
+    POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+    ${CMAKE_CURRENT_SOURCE_DIR}/materials
+    $<TARGET_FILE_DIR:game>/materials
+)

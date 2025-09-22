@@ -1,5 +1,6 @@
 #include "nyanchu/renderer_opengl.h"
 #include "platform/platform_utils.h"
+#include <bx/math.h>
 
 #include <iostream>
 #include <fstream>
@@ -15,9 +16,9 @@ struct PosColorVertex
 
 static PosColorVertex s_triangleVertices[] =
 {
-    {-0.5f, -0.5f,  0.0f, 0xff0000ff }, // Bottom-left, red
-    { 0.5f, -0.5f,  0.0f, 0xff00ff00 }, // Bottom-right, green
-    { 0.0f,  0.5f,  0.0f, 0xffff0000 }, // Top-middle, blue
+    {100.0f, 100.0f, 0.0f, 0xff0000ff },
+    {300.0f, 100.0f, 0.0f, 0xff00ff00 },
+    {200.0f, 300.0f, 0.0f, 0xffff0000 },
 };
 
 static bgfx::VertexLayout s_vertexLayout;
@@ -110,12 +111,21 @@ bool RendererBGFX::initialize(GLFWwindow* window, uint32_t width, uint32_t heigh
 
     bgfx::setViewClear(0, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x303030ff, 1.0f, 0);
 
+    float orthoProjection[16];
+    bx::mtxOrtho(orthoProjection, 0.0f, (float)width, (float)height, 0.0f, 0.0f, 100.0f, 0.0f, bgfx::getCaps()->homogeneousDepth);
+    bgfx::setViewTransform(0, nullptr, orthoProjection);
+    bgfx::setViewRect(0, 0, 0, (uint16_t)width, (uint16_t)height);
+
     return true;
 }
 
 void RendererBGFX::render()
 {
-    bgfx::setViewRect(0, 0, 0, 800, 600);
+    bgfx::frame();
+}
+
+void RendererBGFX::drawTriangle()
+{
     bgfx::touch(0);
 
     // Set vertex buffer
@@ -126,8 +136,6 @@ void RendererBGFX::render()
 
     // Submit primitive for rendering to view 0.
     bgfx::submit(0, m_program);
-
-    // bgfx::frame() is now called in Engine::endFrame()
 }
 
 void RendererBGFX::shutdown()
