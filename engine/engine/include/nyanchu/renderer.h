@@ -21,6 +21,7 @@ public:
 
     virtual void drawMesh(const char* meshName) = 0;
     virtual void drawTriangle() = 0;
+    virtual void drawCube() = 0;
 };
 
 } // namespace nyanchu

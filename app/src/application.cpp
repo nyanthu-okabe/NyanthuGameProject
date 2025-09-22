@@ -24,7 +24,7 @@ void Application::run()
         m_engine->beginFrame();
 
         // App decides what to draw
-        m_engine->getRenderer().drawTriangle();
+        m_engine->getRenderer().drawCube();
 
         m_engine->endFrame();
     }

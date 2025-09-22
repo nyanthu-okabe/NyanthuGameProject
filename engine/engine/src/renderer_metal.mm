@@ -2,6 +2,10 @@
 #include "platform/platform_utils.h"
 #include <iostream>
 
+#define GLM_FORCE_RADIANS
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
 #import <Cocoa/Cocoa.h>
 #import <Metal/Metal.h>
 #import <QuartzCore/CAMetalLayer.h>
@@ -13,17 +17,22 @@ extern "C" {
 
 namespace nyanchu {
 
-struct MetalVertex {
-    float x, y, z, w;
-    float r, g, b, a;
+struct Vertex {
+    glm::vec4 pos;
+    glm::vec4 color;
+};
+
+struct Uniforms {
+    glm::mat4 mvp;
 };
 
 class RendererMetalImpl {
 public:
+    uint32_t _width, _height;
+    float _angle = 0.0f;
+
     id<MTLDevice> _device;
     id<MTLCommandQueue> _commandQueue;
-    id<MTLRenderPipelineState> _pipelineState;
-    id<MTLBuffer> _vertexBuffer;
     CAMetalLayer* _metalLayer;
 
     // Per-frame objects
@@ -31,9 +40,21 @@ public:
     id<MTLCommandBuffer> _commandBuffer;
     id<MTLRenderCommandEncoder> _commandEncoder;
     NSAutoreleasePool* _pool;
+    id<MTLTexture> _depthTexture;
+
+    // Triangle resources
+    id<MTLRenderPipelineState> _trianglePipelineState;
+    id<MTLBuffer> _triangleVertexBuffer;
+
+    // Cube resources
+    id<MTLRenderPipelineState> _cubePipelineState;
+    id<MTLDepthStencilState> _depthState;
+    id<MTLBuffer> _cubeVertexBuffer;
+    id<MTLBuffer> _cubeIndexBuffer;
+    id<MTLBuffer> _uniformBuffer;
 
 
-    RendererMetalImpl(GLFWwindow* window, uint32_t width, uint32_t height) {
+    RendererMetalImpl(GLFWwindow* window, uint32_t width, uint32_t height) : _width(width), _height(height) {
         _device = MTLCreateSystemDefaultDevice();
         if (!_device) {
             std::cerr << "Metal is not supported on this device" << std::endl;
@@ -52,34 +73,22 @@ public:
         [view setWantsLayer:YES];
         [view setLayer:_metalLayer];
 
+        setupTriangle();
+        setupCube();
+        setupDepthBuffer();
+    }
+
+    void setupTriangle() {
         const char* shaderSrc = R"(
             using namespace metal;
-            struct VertexIn {
-                float4 position [[attribute(0)]];
-                float4 color [[attribute(1)]];
-            };
-            struct VertexOut {
-                float4 position [[position]];
-                float4 color;
-            };
-            vertex VertexOut vertex_main(const VertexIn in [[stage_in]]) {
-                VertexOut out;
-                out.position = in.position;
-                out.color = in.color;
-                return out;
-            }
-            fragment float4 fragment_main(const VertexOut in [[stage_in]]) {
-                return in.color;
-            }
+            struct VertexIn { float4 position [[attribute(0)]]; float4 color [[attribute(1)]]; };
+            struct VertexOut { float4 position [[position]]; float4 color; };
+            vertex VertexOut vertex_main(const VertexIn in [[stage_in]]) { return { in.position, in.color }; }
+            fragment float4 fragment_main(const VertexOut in [[stage_in]]) { return in.color; }
         )";
 
         NSError* error = nil;
         id<MTLLibrary> library = [_device newLibraryWithSource:[NSString stringWithUTF8String:shaderSrc] options:nil error:&error];
-        if (!library) {
-            std::cerr << "Failed to create Metal library: " << [[error localizedDescription] UTF8String] << std::endl;
-            return;
-        }
-
         id<MTLFunction> vertexFunc = [library newFunctionWithName:@"vertex_main"];
         id<MTLFunction> fragmentFunc = [library newFunctionWithName:@"fragment_main"];
 
@@ -87,36 +96,102 @@ public:
         pipelineDescriptor.vertexFunction = vertexFunc;
         pipelineDescriptor.fragmentFunction = fragmentFunc;
         pipelineDescriptor.colorAttachments[0].pixelFormat = _metalLayer.pixelFormat;
+        pipelineDescriptor.depthAttachmentPixelFormat = MTLPixelFormatDepth32Float;
+
+        MTLVertexDescriptor *vertexDescriptor = [MTLVertexDescriptor vertexDescriptor];
+        vertexDescriptor.attributes[0].format = MTLVertexFormatFloat4; // pos
+        vertexDescriptor.attributes[0].offset = 0;
+        vertexDescriptor.attributes[0].bufferIndex = 0;
+        vertexDescriptor.attributes[1].format = MTLVertexFormatFloat4; // color
+        vertexDescriptor.attributes[1].offset = sizeof(glm::vec4);
+        vertexDescriptor.attributes[1].bufferIndex = 0;
+        vertexDescriptor.layouts[0].stride = sizeof(Vertex);
+        pipelineDescriptor.vertexDescriptor = vertexDescriptor;
+
+        _trianglePipelineState = [_device newRenderPipelineStateWithDescriptor:pipelineDescriptor error:&error];
+
+        static const Vertex vertices[] = {
+            {{ -0.5f, -0.5f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f, 1.0f }},
+            {{  0.5f, -0.5f, 0.0f, 1.0f }, { 0.0f, 1.0f, 0.0f, 1.0f }},
+            {{  0.0f,  0.5f, 0.0f, 1.0f }, { 0.0f, 0.0f, 1.0f, 1.0f }},
+        };
+        _triangleVertexBuffer = [_device newBufferWithBytes:vertices length:sizeof(vertices) options:MTLResourceStorageModeShared];
+    }
+
+    void setupCube() {
+        const char* shaderSrc = R"(
+            using namespace metal;
+            struct VertexIn { float4 position [[attribute(0)]]; float4 color [[attribute(1)]]; };
+            struct VertexOut { float4 position [[position]]; float4 color; };
+            struct Uniforms { float4x4 mvp; };
+            vertex VertexOut vertex_main(const VertexIn in [[stage_in]], constant Uniforms &uniforms [[buffer(1)]]) {
+                VertexOut out;
+                out.position = uniforms.mvp * in.position;
+                out.color = in.color;
+                return out;
+            }
+            fragment float4 fragment_main(const VertexOut in [[stage_in]]) { return in.color; }
+        )";
+
+        NSError* error = nil;
+        id<MTLLibrary> library = [_device newLibraryWithSource:[NSString stringWithUTF8String:shaderSrc] options:nil error:&error];
+        id<MTLFunction> vertexFunc = [library newFunctionWithName:@"vertex_main"];
+        id<MTLFunction> fragmentFunc = [library newFunctionWithName:@"fragment_main"];
+
+        MTLRenderPipelineDescriptor* pipelineDescriptor = [[MTLRenderPipelineDescriptor alloc] init];
+        pipelineDescriptor.vertexFunction = vertexFunc;
+        pipelineDescriptor.fragmentFunction = fragmentFunc;
+        pipelineDescriptor.colorAttachments[0].pixelFormat = _metalLayer.pixelFormat;
+        pipelineDescriptor.depthAttachmentPixelFormat = MTLPixelFormatDepth32Float;
 
         MTLVertexDescriptor *vertexDescriptor = [MTLVertexDescriptor vertexDescriptor];
         vertexDescriptor.attributes[0].format = MTLVertexFormatFloat4;
         vertexDescriptor.attributes[0].offset = 0;
         vertexDescriptor.attributes[0].bufferIndex = 0;
         vertexDescriptor.attributes[1].format = MTLVertexFormatFloat4;
-        vertexDescriptor.attributes[1].offset = sizeof(float) * 4;
+        vertexDescriptor.attributes[1].offset = sizeof(glm::vec4);
         vertexDescriptor.attributes[1].bufferIndex = 0;
-        vertexDescriptor.layouts[0].stride = sizeof(MetalVertex);
-
+        vertexDescriptor.layouts[0].stride = sizeof(Vertex);
         pipelineDescriptor.vertexDescriptor = vertexDescriptor;
 
-        _pipelineState = [_device newRenderPipelineStateWithDescriptor:pipelineDescriptor error:&error];
-        if (!_pipelineState) {
-            std::cerr << "Failed to create Metal pipeline state: " << [[error localizedDescription] UTF8String] << std::endl;
-            return;
-        }
+        _cubePipelineState = [_device newRenderPipelineStateWithDescriptor:pipelineDescriptor error:&error];
 
-        static const MetalVertex vertices[] = {
-            { -0.5f, -0.5f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f },
-            {  0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f },
-            {  0.0f,  0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f }
+        static const Vertex vertices[] = {
+            {{-1.0, -1.0, -1.0, 1.0}, {1, 0, 0, 1}}, {{ 1.0, -1.0, -1.0, 1.0}, {0, 1, 0, 1}},
+            {{ 1.0,  1.0, -1.0, 1.0}, {0, 0, 1, 1}}, {{-1.0,  1.0, -1.0, 1.0}, {1, 1, 0, 1}},
+            {{-1.0, -1.0,  1.0, 1.0}, {1, 0, 1, 1}}, {{ 1.0, -1.0,  1.0, 1.0}, {0, 1, 1, 1}},
+            {{ 1.0,  1.0,  1.0, 1.0}, {1, 1, 1, 1}}, {{-1.0,  1.0,  1.0, 1.0}, {0, 0, 0, 1}}
         };
+        _cubeVertexBuffer = [_device newBufferWithBytes:vertices length:sizeof(vertices) options:MTLResourceStorageModeShared];
 
-        _vertexBuffer = [_device newBufferWithBytes:vertices length:sizeof(vertices) options:MTLResourceStorageModeShared];
+        static const uint16_t indices[] = {
+            0, 1, 2, 2, 3, 0, // Front
+            1, 5, 6, 6, 2, 1, // Right
+            5, 4, 7, 7, 6, 5, // Back
+            4, 0, 3, 3, 7, 4, // Left
+            3, 2, 6, 6, 7, 3, // Top
+            4, 5, 1, 1, 0, 4  // Bottom
+        };
+        _cubeIndexBuffer = [_device newBufferWithBytes:indices length:sizeof(indices) options:MTLResourceStorageModeShared];
+        _uniformBuffer = [_device newBufferWithLength:sizeof(Uniforms) options:MTLResourceStorageModeShared];
     }
 
-    ~RendererMetalImpl() {
-        // In a real app, you'd release the Metal objects.
+    void setupDepthBuffer() {
+        MTLTextureDescriptor* depthTexDesc = [MTLTextureDescriptor texture2DDescriptorWithPixelFormat:MTLPixelFormatDepth32Float
+                                                                                                width:_width
+                                                                                               height:_height
+                                                                                            mipmapped:NO];
+        depthTexDesc.usage = MTLTextureUsageRenderTarget;
+        depthTexDesc.storageMode = MTLStorageModePrivate;
+        _depthTexture = [_device newTextureWithDescriptor:depthTexDesc];
+
+        MTLDepthStencilDescriptor* depthDesc = [MTLDepthStencilDescriptor new];
+        depthDesc.depthCompareFunction = MTLCompareFunctionLess;
+        depthDesc.depthWriteEnabled = YES;
+        _depthState = [_device newDepthStencilStateWithDescriptor:depthDesc];
     }
+
+    ~RendererMetalImpl() {}
 
     void beginFrame() {
         _pool = [[NSAutoreleasePool alloc] init];
@@ -131,69 +206,71 @@ public:
         renderPassDescriptor.colorAttachments[0].clearColor = MTLClearColorMake(0.1, 0.1, 0.1, 1.0);
         renderPassDescriptor.colorAttachments[0].storeAction = MTLStoreActionStore;
 
+        renderPassDescriptor.depthAttachment.texture = _depthTexture;
+        renderPassDescriptor.depthAttachment.loadAction = MTLLoadActionClear;
+        renderPassDescriptor.depthAttachment.storeAction = MTLStoreActionDontCare;
+        renderPassDescriptor.depthAttachment.clearDepth = 1.0;
+
         _commandBuffer = [_commandQueue commandBuffer];
         _commandEncoder = [_commandBuffer renderCommandEncoderWithDescriptor:renderPassDescriptor];
+        [_commandEncoder setDepthStencilState:_depthState];
     }
 
     void endFrame() {
         if (!_commandEncoder) return;
-
         [_commandEncoder endEncoding];
         [_commandBuffer presentDrawable:_drawable];
         [_commandBuffer commit];
-
         [_pool drain];
-        _pool = nil;
-        _drawable = nil;
-        _commandBuffer = nil;
-        _commandEncoder = nil;
+    }
+
+    void updateUniforms() {
+        _angle += 0.01f;
+        float aspect = (float)_width / (float)_height;
+        glm::mat4 proj = glm::perspective(glm::radians(60.0f), aspect, 0.1f, 100.0f);
+        glm::mat4 view = glm::lookAt(glm::vec3(0, 0, -5), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
+        glm::mat4 model = glm::rotate(glm::mat4(1.0f), _angle, glm::vec3(0, 1, 0));
+        model = glm::rotate(model, _angle * 0.5f, glm::vec3(1, 0, 0));
+
+        Uniforms uniforms;
+        uniforms.mvp = proj * view * model;
+        memcpy([_uniformBuffer contents], &uniforms, sizeof(uniforms));
     }
 
     void drawTriangle() {
         if (!_commandEncoder) return;
-        [_commandEncoder setRenderPipelineState:_pipelineState];
-        [_commandEncoder setVertexBuffer:_vertexBuffer offset:0 atIndex:0];
+        [_commandEncoder setRenderPipelineState:_trianglePipelineState];
+        [_commandEncoder setVertexBuffer:_triangleVertexBuffer offset:0 atIndex:0];
         [_commandEncoder drawPrimitives:MTLPrimitiveTypeTriangle vertexStart:0 vertexCount:3];
+    }
+
+    void drawCube() {
+        if (!_commandEncoder) return;
+        updateUniforms();
+        [_commandEncoder setRenderPipelineState:_cubePipelineState];
+        [_commandEncoder setVertexBuffer:_cubeVertexBuffer offset:0 atIndex:0];
+        [_commandEncoder setVertexBuffer:_uniformBuffer offset:0 atIndex:1];
+        [_commandEncoder drawIndexedPrimitives:MTLPrimitiveTypeTriangle
+                                      indexCount:36
+                                       indexType:MTLIndexTypeUInt16
+                                     indexBuffer:_cubeIndexBuffer
+                               indexBufferOffset:0];
     }
 };
 
 RendererMetal::RendererMetal() : _impl(nullptr) {}
-RendererMetal::~RendererMetal() {
-    shutdown();
-}
+RendererMetal::~RendererMetal() { shutdown(); }
 
 bool RendererMetal::initialize(GLFWwindow* window, uint32_t width, uint32_t height) {
     _impl = new RendererMetalImpl(window, width, height);
     return _impl != nullptr && _impl->_device != nil;
 }
 
-void RendererMetal::shutdown() {
-    if (_impl) {
-        delete _impl;
-        _impl = nullptr;
-    }
-}
-
-void RendererMetal::beginFrame() {
-    if (_impl) {
-        _impl->beginFrame();
-    }
-}
-
-void RendererMetal::endFrame() {
-    if (_impl) {
-        _impl->endFrame();
-    }
-}
-
-void RendererMetal::drawMesh(const char* meshName) {
-    std::cout << "Metal Drawing mesh: " << meshName << std::endl;
-}
-
-void RendererMetal::drawTriangle() {
-    if (_impl) {
-        _impl->drawTriangle();
-    }
-}
+void RendererMetal::shutdown() { if (_impl) { delete _impl; _impl = nullptr; } }
+void RendererMetal::beginFrame() { if (_impl) _impl->beginFrame(); }
+void RendererMetal::endFrame() { if (_impl) _impl->endFrame(); }
+void RendererMetal::drawMesh(const char* meshName) { std::cout << "Drawing mesh: " << meshName << std::endl; }
+void RendererMetal::drawTriangle() { if (_impl) _impl->drawTriangle(); }
+void RendererMetal::drawCube() { if (_impl) _impl->drawCube(); }
 
 } // namespace nyanchu
