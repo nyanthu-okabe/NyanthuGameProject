@@ -15,4 +15,5 @@ public:
 
 private:
     std::unique_ptr<nyanchu::Engine> m_engine;
+    float m_angle = 0.0f;
 };

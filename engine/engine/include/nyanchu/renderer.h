@@ -5,6 +5,8 @@
 // Forward declare GLFWwindow
 struct GLFWwindow;
 
+#include <glm/glm.hpp>
+
 namespace nyanchu {
 
 // Abstract base class for renderers
@@ -21,7 +23,7 @@ public:
 
     virtual void drawMesh(const char* meshName) = 0;
     virtual void drawTriangle() = 0;
-    virtual void drawCube() = 0;
+    virtual void drawCube(const glm::mat4& modelMatrix) = 0;
 };
 
 } // namespace nyanchu

@@ -29,7 +29,6 @@ struct Uniforms {
 class RendererMetalImpl {
 public:
     uint32_t _width, _height;
-    float _angle = 0.0f;
 
     id<MTLDevice> _device;
     id<MTLCommandQueue> _commandQueue;
@@ -224,13 +223,10 @@ public:
         [_pool drain];
     }
 
-    void updateUniforms() {
-        _angle += 0.01f;
+    void updateCubeUniforms(const glm::mat4& model) {
         float aspect = (float)_width / (float)_height;
         glm::mat4 proj = glm::perspective(glm::radians(60.0f), aspect, 0.1f, 100.0f);
         glm::mat4 view = glm::lookAt(glm::vec3(0, 0, -5), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
-        glm::mat4 model = glm::rotate(glm::mat4(1.0f), _angle, glm::vec3(0, 1, 0));
-        model = glm::rotate(model, _angle * 0.5f, glm::vec3(1, 0, 0));
 
         Uniforms uniforms;
         uniforms.mvp = proj * view * model;
@@ -244,9 +240,9 @@ public:
         [_commandEncoder drawPrimitives:MTLPrimitiveTypeTriangle vertexStart:0 vertexCount:3];
     }
 
-    void drawCube() {
+    void drawCube(const glm::mat4& modelMatrix) {
         if (!_commandEncoder) return;
-        updateUniforms();
+        updateCubeUniforms(modelMatrix);
         [_commandEncoder setRenderPipelineState:_cubePipelineState];
         [_commandEncoder setVertexBuffer:_cubeVertexBuffer offset:0 atIndex:0];
         [_commandEncoder setVertexBuffer:_uniformBuffer offset:0 atIndex:1];
@@ -271,6 +267,6 @@ void RendererMetal::beginFrame() { if (_impl) _impl->beginFrame(); }
 void RendererMetal::endFrame() { if (_impl) _impl->endFrame(); }
 void RendererMetal::drawMesh(const char* meshName) { std::cout << "Drawing mesh: " << meshName << std::endl; }
 void RendererMetal::drawTriangle() { if (_impl) _impl->drawTriangle(); }
-void RendererMetal::drawCube() { if (_impl) _impl->drawCube(); }
+void RendererMetal::drawCube(const glm::mat4& modelMatrix) { if (_impl) _impl->drawCube(modelMatrix); }
 
 } // namespace nyanchu

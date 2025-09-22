@@ -23,7 +23,7 @@ public:
 
     void drawMesh(const char* meshName) override;
     void drawTriangle() override;
-    void drawCube() override;
+    void drawCube(const glm::mat4& modelMatrix) override;
 
 private:
     class RendererMetalImpl* _impl;
