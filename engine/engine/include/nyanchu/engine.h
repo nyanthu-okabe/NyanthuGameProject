@@ -25,12 +25,14 @@ public:
     void endFrame();
 
     IRenderer& getRenderer();
-    Audio& getAudio();
-    const std::string& getResourceDir() const;
+
+    void playBgm(const std::string& soundName);
 
     void resize(int width, int height);
 
 private:
+    const std::string& getResourceDir() const;
+
     GLFWwindow* m_window;
     std::unique_ptr<IRenderer> m_renderer;
     std::unique_ptr<Audio> m_audio;

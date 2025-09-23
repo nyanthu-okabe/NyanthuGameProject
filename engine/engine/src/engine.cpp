@@ -97,8 +97,9 @@ IRenderer& Engine::getRenderer() {
     return *m_renderer;
 }
 
-Audio& Engine::getAudio() {
-    return *m_audio;
+void Engine::playBgm(const std::string& soundName) {
+    std::string fullPath = getResourceDir() + "/" + soundName;
+    m_audio->play_bgm(fullPath.c_str());
 }
 
 const std::string& Engine::getResourceDir() const {
