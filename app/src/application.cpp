@@ -35,6 +35,8 @@ void Application::run()
 
         m_engine->getRenderer().drawCube(model);
 
+        // App decides what to draw and where
+
         m_engine->endFrame();
     }
 }

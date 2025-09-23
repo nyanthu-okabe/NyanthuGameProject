@@ -2,14 +2,12 @@
 
 #define RAYGUI_IMPLEMENTATION
 #include "raygui.h"
-
 #include "WindowManager.h"
 #include <cmath>
 
 int main() {
     InitWindow(800, 600, "NyanthuGame Settings");
     SetTargetFPS(60);
-
     WindowManager window;
 
     float angle = 0.0f;
