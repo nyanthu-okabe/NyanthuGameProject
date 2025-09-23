@@ -18,7 +18,8 @@ bool Application::initialize()
 {
     m_engine->init();
     m_audio = &m_engine->getAudio();
-    m_audio->play_bgm("materials/bgm.wav");
+    std::string bgm_path = m_engine->getResourceDir() + "/materials/bgm.wav";
+    m_audio->play_bgm(bgm_path.c_str());
     return true;
 }
 

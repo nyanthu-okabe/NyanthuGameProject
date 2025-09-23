@@ -4,6 +4,7 @@
 #include "audio.h"
 
 #include <memory>
+#include <string>
 
 // Forward declare GLFWwindow
 struct GLFWwindow;
@@ -25,6 +26,7 @@ public:
 
     IRenderer& getRenderer();
     Audio& getAudio();
+    const std::string& getResourceDir() const;
 
     void resize(int width, int height);
 
@@ -32,6 +34,7 @@ private:
     GLFWwindow* m_window;
     std::unique_ptr<IRenderer> m_renderer;
     std::unique_ptr<Audio> m_audio;
+    std::string m_resourceDir;
     bool m_isRunning = true;
 };
 

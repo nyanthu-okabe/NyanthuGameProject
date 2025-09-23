@@ -1,6 +1,7 @@
 #include "nyanchu/engine.h"
 #include <GLFW/glfw3.h>
 #include <iostream>
+#include "platform/platform_utils.h"
 
 #ifdef __APPLE__
 #include "nyanchu/renderer_metal.h"
@@ -55,12 +56,16 @@ void Engine::init() {
     }
 
     m_audio = std::make_unique<Audio>();
+    m_audio->init();
+
+    m_resourceDir = getExecutableDir();
 
     m_isRunning = true;
     std::cout << "Engine initialized" << std::endl;
 }
 
 void Engine::shutdown() {
+    m_audio->shutdown();
     m_renderer->shutdown();
     glfwDestroyWindow(m_window);
     glfwTerminate();
@@ -96,4 +101,7 @@ Audio& Engine::getAudio() {
     return *m_audio;
 }
 
+const std::string& Engine::getResourceDir() const {
+    return m_resourceDir;
+}
 } // namespace nyanchu
