@@ -1,4 +1,3 @@
-
 cmake_minimum_required(VERSION 3.16)
 
 set(CMAKE_CXX_STANDARD 17)
@@ -43,6 +42,8 @@ set(BGFX_BUILD_TOOLS ON CACHE BOOL "Build bgfx tools")
 set(BGFX_INSTALL OFF CACHE BOOL "Enable bgfx installation")
 FetchContent_MakeAvailable(bgfx)
 
+find_package(Threads REQUIRED)
+
 
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build shared libraries" FORCE)
 
@@ -78,6 +79,7 @@ endif()
 
 target_include_directories(nyanthu_engine PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/engine/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/engine/include/external
     ${bgfx_SOURCE_DIR}/bgfx/include
     ${bgfx_SOURCE_DIR}/bimg/include
     ${bgfx_SOURCE_DIR}/bx/include
@@ -92,6 +94,8 @@ target_link_libraries(nyanthu_engine
         bx
         glfw
         flecs
+        Threads::Threads
+        m
 )
 
 if(APPLE)

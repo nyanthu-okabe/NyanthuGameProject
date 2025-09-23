@@ -17,6 +17,8 @@ Application::~Application()
 bool Application::initialize()
 {
     m_engine->init();
+    m_audio = &m_engine->getAudio();
+    m_audio->play_bgm("materials/bgm.wav");
     return true;
 }
 
