@@ -24,6 +24,7 @@ public:
     virtual void drawMesh(const char* meshName) = 0;
     virtual void drawTriangle() = 0;
     virtual void drawCube(const glm::mat4& modelMatrix) = 0;
+    virtual void resize(uint32_t width, uint32_t height) = 0;
 };
 
 } // namespace nyanchu

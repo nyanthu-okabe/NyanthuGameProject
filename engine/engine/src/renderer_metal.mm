@@ -65,7 +65,7 @@ public:
         _metalLayer.device = _device;
         _metalLayer.pixelFormat = MTLPixelFormatBGRA8Unorm;
         _metalLayer.framebufferOnly = YES;
-        _metalLayer.frame = CGRectMake(0, 0, width, height);
+        _metalLayer.drawableSize = CGSizeMake(width, height);
 
         NSWindow* nswin = glfwGetCocoaWindow(window);
         NSView* view = [nswin contentView];
@@ -176,6 +176,7 @@ public:
     }
 
     void setupDepthBuffer() {
+        if (_width == 0 || _height == 0) return;
         MTLTextureDescriptor* depthTexDesc = [MTLTextureDescriptor texture2DDescriptorWithPixelFormat:MTLPixelFormatDepth32Float
                                                                                                 width:_width
                                                                                                height:_height
@@ -223,7 +224,15 @@ public:
         [_pool drain];
     }
 
+    void resize(uint32_t width, uint32_t height) {
+        _width = width;
+        _height = height;
+        _metalLayer.drawableSize = CGSizeMake(width, height);
+        setupDepthBuffer();
+    }
+
     void updateCubeUniforms(const glm::mat4& model) {
+        if (_width == 0 || _height == 0) return;
         float aspect = (float)_width / (float)_height;
         glm::mat4 proj = glm::perspective(glm::radians(60.0f), aspect, 0.1f, 100.0f);
         glm::mat4 view = glm::lookAt(glm::vec3(0, 0, -5), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
@@ -265,6 +274,7 @@ bool RendererMetal::initialize(GLFWwindow* window, uint32_t width, uint32_t heig
 void RendererMetal::shutdown() { if (_impl) { delete _impl; _impl = nullptr; } }
 void RendererMetal::beginFrame() { if (_impl) _impl->beginFrame(); }
 void RendererMetal::endFrame() { if (_impl) _impl->endFrame(); }
+void RendererMetal::resize(uint32_t width, uint32_t height) { if (_impl) _impl->resize(width, height); }
 void RendererMetal::drawMesh(const char* meshName) { std::cout << "Drawing mesh: " << meshName << std::endl; }
 void RendererMetal::drawTriangle() { if (_impl) _impl->drawTriangle(); }
 void RendererMetal::drawCube(const glm::mat4& modelMatrix) { if (_impl) _impl->drawCube(modelMatrix); }

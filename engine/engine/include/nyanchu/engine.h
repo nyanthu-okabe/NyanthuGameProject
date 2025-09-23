@@ -26,6 +26,8 @@ public:
     IRenderer& getRenderer();
     Audio& getAudio();
 
+    void resize(int width, int height);
+
 private:
     GLFWwindow* m_window;
     std::unique_ptr<IRenderer> m_renderer;

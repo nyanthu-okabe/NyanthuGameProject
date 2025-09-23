@@ -24,6 +24,7 @@ public:
     void drawMesh(const char* meshName) override;
     void drawTriangle() override;
     void drawCube(const glm::mat4& modelMatrix) override;
+    void resize(uint32_t width, uint32_t height) override;
 
 private:
     class RendererMetalImpl* _impl;

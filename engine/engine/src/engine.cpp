@@ -10,6 +10,15 @@
 
 namespace nyanchu {
 
+// GLFW framebuffer resize callback
+static void framebuffer_size_callback(GLFWwindow* window, int width, int height)
+{
+    auto engine = static_cast<Engine*>(glfwGetWindowUserPointer(window));
+    if (engine) {
+        engine->resize(width, height);
+    }
+}
+
 Engine::Engine() : m_window(nullptr) {}
 
 Engine::~Engine() {
@@ -30,6 +39,10 @@ void Engine::init() {
         return;
     }
     glfwMakeContextCurrent(m_window);
+
+    // Set up resize callback
+    glfwSetWindowUserPointer(m_window, this);
+    glfwSetFramebufferSizeCallback(m_window, framebuffer_size_callback);
 
     #ifdef __APPLE__
     m_renderer = std::make_unique<RendererMetal>();
@@ -69,6 +82,10 @@ void Engine::beginFrame() {
 void Engine::endFrame() {
     m_renderer->endFrame();
     glfwSwapBuffers(m_window);
+}
+
+void Engine::resize(int width, int height) {
+    m_renderer->resize(width, height);
 }
 
 IRenderer& Engine::getRenderer() {
