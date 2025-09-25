@@ -3,7 +3,6 @@
 
 ## bgfx
 ## flecs
-## tiny_obj_loader.h
 ## stb_image.h
 ## miniaudio
 ## glm
@@ -11,6 +10,3 @@
 ## Dear ImGui
 ## GLFW
 ## Assimp
-## sol3
-## websocketpp
-## PhysFS
