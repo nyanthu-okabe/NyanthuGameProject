@@ -21,7 +21,7 @@ bool Application::initialize()
     m_engine->init();
 
     std::string executableDir = getExecutableDir();
-    std::string modelPath = executableDir + "/materials/con.obj";
+    std::string modelPath = executableDir + "/materials/model(1).obj";
 
     m_engine->playBgm("materials/bgm.wav");
     m_mesh = std::make_unique<nyanchu::Mesh>(modelPath.c_str());
