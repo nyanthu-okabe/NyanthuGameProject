@@ -1,5 +1,7 @@
 #include "application.h"
 #include <iostream>
+#include <chrono>
+#include "platform_utils.h"
 
 #define GLM_FORCE_RADIANS
 #include <glm/glm.hpp>
@@ -17,14 +19,25 @@ Application::~Application()
 bool Application::initialize()
 {
     m_engine->init();
-    m_engine->playBgm("materials/bgm.wav");
+
+    std::string executableDir = getExecutableDir();
+    std::string bgmPath = executableDir + "/materials/bgm.wav";
+    std::string modelPath = executableDir + "/materials/con.obj";
+
+    m_engine->playBgm(bgmPath.c_str());
+    m_mesh = std::make_unique<nyanchu::Mesh>(modelPath.c_str());
     return true;
 }
 
 void Application::run()
 {
+    using clock = std::chrono::high_resolution_clock;
+    auto lastTime = clock::now();
+    int frameCount = 0;
+
     while (m_engine->isRunning())
     {
+        auto startTime = clock::now();
         m_engine->pollEvents();
         m_engine->beginFrame();
 
@@ -34,13 +47,23 @@ void Application::run()
         model = glm::rotate(model, m_angle, glm::vec3(0.0f, 1.0f, 0.0f));
         model = glm::rotate(model, m_angle * 0.5f, glm::vec3(1.0f, 0.0f, 0.0f));
 
-        m_engine->getRenderer().drawCube(model);
-
-        // App decides what to draw and where
+        m_engine->getRenderer().drawMesh(*m_mesh);
 
         m_engine->endFrame();
+
+        // FPS計算
+        frameCount++;
+        auto currentTime = clock::now();
+        float elapsed = std::chrono::duration<float>(currentTime - lastTime).count();
+        if (elapsed >= 1.0f) // 1秒ごとに表示
+        {
+            std::cout << "FPS: " << frameCount / elapsed << std::endl;
+            frameCount = 0;
+            lastTime = currentTime;
+        }
     }
 }
+
 
 void Application::shutdown()
 {

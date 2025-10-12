@@ -15,6 +15,7 @@ add_executable(game
 
 target_include_directories(game PRIVATE
     ../engine/engine/include
+    ../engine/engine/src/platform
     src
 )
 
@@ -32,14 +33,48 @@ if(APPLE)
     )
 endif()
 
-# This assumes the shaders are copied to the build output directory of the game
-# We might need to adjust the main CMakeLists.txt to handle this better
-# For now, let's add a command to copy the shaders from the engine's build dir
+# Add a custom target to compile shaders
+add_custom_target(compile_shaders ALL)
+
+set(SHADER_DIR ${CMAKE_CURRENT_SOURCE_DIR}/shaders)
+set(SHADER_BUILD_DIR ${CMAKE_BINARY_DIR}/shaders)
+file(MAKE_DIRECTORY ${SHADER_BUILD_DIR})
+
+# This path might need to be adjusted depending on where bgfx is built.
+# Assuming it's in the main build directory.
+set(SHADER_COMPILER ${CMAKE_BINARY_DIR}/_deps/bgfx-build/bin/shaderc)
+
+file(GLOB SHADERS ${SHADER_DIR}/*.sc)
+
+if(SHADERS)
+    foreach(SHADER ${SHADERS})
+        get_filename_component(SHADER_NAME ${SHADER} NAME_WE)
+        set(SHADER_TYPE)
+        if(SHADER_NAME MATCHES "^vs_")
+            set(SHADER_TYPE "vertex")
+        elseif(SHADER_NAME MATCHES "^fs_")
+            set(SHADER_TYPE "fragment")
+        endif()
+
+        set(OUTPUT_SHADER ${SHADER_BUILD_DIR}/${SHADER_NAME}.bin)
+
+        add_custom_command(
+            TARGET compile_shaders
+            COMMAND ${SHADER_COMPILER} -f ${SHADER} -o ${OUTPUT_SHADER} --type ${SHADER_TYPE} --platform osx -p metal
+            DEPENDS ${SHADER}
+            COMMENT "Compiling ${SHADER_NAME}"
+        )
+    endforeach()
+else()
+    message(STATUS "No .sc shader files found in ${SHADER_DIR}. Shader compilation will be skipped.")
+endif()
+
+# Copy compiled shaders to the build directory
 add_custom_command(
     TARGET game
     POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
-    ${CMAKE_SOURCE_DIR}/engine/shaders
+    ${SHADER_BUILD_DIR}
     $<TARGET_FILE_DIR:game>/shaders
 )
 

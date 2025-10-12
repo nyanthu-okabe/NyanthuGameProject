@@ -145,11 +145,28 @@ void RendererBGFX::shutdown()
     bgfx::shutdown();
 }
 
-void RendererBGFX::drawMesh(const char* meshName) {
+void RendererBGFX::drawMesh(const Mesh& mesh) {
     // Placeholder implementation
-    std::cout << "Drawing mesh: " << meshName << std::endl;
+    std::cout << "Drawing mesh with " << mesh.getVertices().size() << " vertices." << std::endl;
     // In a real implementation, this would involve loading mesh data,
     // setting up different vertex/index buffers, and submitting a draw call.
 }
+
+void RendererBGFX::drawCube(const glm::mat4& modelMatrix) {
+    // Placeholder
+}
+
+void RendererBGFX::beginFrame() {
+    // Placeholder
+}
+
+void RendererBGFX::endFrame() {
+    // Placeholder
+}
+
+void RendererBGFX::resize(uint32_t width, uint32_t height) {
+    // Placeholder
+}
+
 
 } // namespace nyanchu

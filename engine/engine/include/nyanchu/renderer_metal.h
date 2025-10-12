@@ -21,7 +21,7 @@ public:
     void beginFrame() override;
     void endFrame() override;
 
-    void drawMesh(const char* meshName) override;
+    void drawMesh(const Mesh& mesh) override;
     void drawTriangle() override;
     void drawCube(const glm::mat4& modelMatrix) override;
     void resize(uint32_t width, uint32_t height) override;

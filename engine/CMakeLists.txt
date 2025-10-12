@@ -53,6 +53,7 @@ add_library(nyanthu_engine
     engine/src/ecs_flecs.cpp
     engine/src/audio_miniaudio.cpp
     engine/src/physics_jolt.cpp
+    engine/src/mesh.cpp
 )
 
 if (APPLE)
@@ -85,6 +86,7 @@ target_include_directories(nyanthu_engine PUBLIC
     ${bgfx_SOURCE_DIR}/bx/include
     ${glm_SOURCE_DIR}
     ${flecs_SOURCE_DIR}
+    ${glfw_SOURCE_DIR}/include
 )
 
 target_link_libraries(nyanthu_engine
@@ -117,51 +119,3 @@ endif()
 # )
 #
 # target_compile_definitions(hello_world PRIVATE GLFW_INCLUDE_NONE GLFW_EXPOSE_NATIVE_COCOA)
-
-
-# Add a custom target to compile shaders
-add_custom_target(compile_shaders ALL)
-
-set(SHADER_DIR ${CMAKE_CURRENT_SOURCE_DIR}/shaders)
-set(SHADER_BUILD_DIR ${CMAKE_BINARY_DIR}/shaders)
-file(MAKE_DIRECTORY ${SHADER_BUILD_DIR})
-
-set(SHADER_COMPILER ${bgfx_BINARY_DIR}/bin/shaderc)
-
-file(GLOB SHADERS ${SHADER_DIR}/*.sc)
-
-foreach(SHADER ${SHADERS})
-    get_filename_component(SHADER_NAME ${SHADER} NAME_WE)
-    set(SHADER_TYPE)
-    if(SHADER_NAME MATCHES "^vs_")
-        set(SHADER_TYPE "vertex")
-    elseif(SHADER_NAME MATCHES "^fs_")
-        set(SHADER_TYPE "fragment")
-    endif()
-
-    set(OUTPUT_SHADER ${SHADER_BUILD_DIR}/${SHADER_NAME}.bin)
-
-    add_custom_command(
-        TARGET compile_shaders
-        COMMAND ${SHADER_COMPILER} -f ${SHADER} -o ${OUTPUT_SHADER} --type ${SHADER_TYPE} --platform osx -p metal
-        DEPENDS ${SHADER}
-        COMMENT "Compiling ${SHADER_NAME}"
-    )
-endforeach()
-
-# add_dependencies(hello_world compile_shaders)
-
-# Copy shaders to the build directory
-# add_custom_command(
-#     TARGET hello_world
-#     POST_BUILD
-#     COMMAND ${CMAKE_COMMAND} -E copy_directory
-#     ${SHADER_BUILD_DIR}
-#     $<TARGET_FILE_DIR:hello_world>/shaders
-# )
-
-# Add a custom target to run the example
-# add_custom_target(run_hello_world
-#     COMMAND $<TARGET_FILE:hello_world>
-#     DEPENDS hello_world
-# )
