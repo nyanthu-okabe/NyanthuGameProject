@@ -218,7 +218,7 @@ void RendererMetal::shutdown() { if (_impl) { delete _impl; _impl = nullptr; } }
 void RendererMetal::beginFrame() { if (_impl) _impl->beginFrame(); }
 void RendererMetal::endFrame() { if (_impl) _impl->endFrame(); }
 void RendererMetal::resize(uint32_t width, uint32_t height) { if (_impl) _impl->resize(width, height); }
-void RendererMetal::drawMesh(const Mesh& mesh) { if (_impl) _impl->drawMesh(mesh, glm::mat4(1.0f)); }
+void RendererMetal::drawMesh(const Mesh& mesh, const glm::mat4& modelMatrix) { if (_impl) _impl->drawMesh(mesh, modelMatrix); }
 void RendererMetal::drawTriangle() { /* Not implemented */ }
 void RendererMetal::drawCube(const glm::mat4& modelMatrix) { /* Not implemented */ }
 

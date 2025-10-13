@@ -145,7 +145,7 @@ void RendererBGFX::shutdown()
     bgfx::shutdown();
 }
 
-void RendererBGFX::drawMesh(const Mesh& mesh) {
+void RendererBGFX::drawMesh(const Mesh& mesh, const glm::mat4& modelMatrix) {
     // Placeholder implementation
     std::cout << "Drawing mesh with " << mesh.getVertices().size() << " vertices." << std::endl;
     // In a real implementation, this would involve loading mesh data,

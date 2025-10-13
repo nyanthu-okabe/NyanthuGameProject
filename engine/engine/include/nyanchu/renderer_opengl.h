@@ -1,6 +1,6 @@
 #pragma once
 
-#include "renderer.h" // Include the IRenderer interface
+#include "renderer.h"
 #include <bgfx/bgfx.h>
 #include <cstdint>
 
@@ -17,10 +17,17 @@ public:
     ~RendererBGFX() override;
 
     bool initialize(GLFWwindow* window, uint32_t width, uint32_t height) override;
-    void render() override;
     void shutdown() override;
 
-    void drawMesh(const char* meshName) override;
+    void beginFrame() override;
+    void endFrame() override;
+
+    void drawMesh(const Mesh& mesh, const glm::mat4& modelMatrix) override;
+    void drawTriangle() override;
+    void drawCube(const glm::mat4& modelMatrix) override;
+    void resize(uint32_t width, uint32_t height) override;
+
+    void render();
 
 private:
     bgfx::VertexBufferHandle m_vbh;

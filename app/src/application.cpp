@@ -44,9 +44,9 @@ void Application::run()
         m_angle += 0.01f;
         glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
         model = glm::rotate(model, m_angle, glm::vec3(0.0f, 1.0f, 0.0f));
-        model = glm::rotate(model, m_angle * 0.5f, glm::vec3(1.0f, 0.0f, 0.0f));
+       // model = glm::rotate(model, m_angle * 0.5f, glm::vec3(1.0f, 0.0f, 0.0f));
 
-        m_engine->getRenderer().drawMesh(*m_mesh);
+        m_engine->getRenderer().drawMesh(*m_mesh, model);
 
         m_engine->endFrame();
 
