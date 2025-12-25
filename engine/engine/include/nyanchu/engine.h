@@ -19,7 +19,6 @@ public:
     ~Engine();
 
     void init();
-    void shutdown();
     bool isRunning();
 
     void pollEvents();

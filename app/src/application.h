@@ -12,7 +12,6 @@ public:
 
     bool initialize();
     void run();
-    void shutdown();
 
 private:
     std::unique_ptr<nyanchu::Engine> m_engine;

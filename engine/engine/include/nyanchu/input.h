@@ -28,11 +28,6 @@ public:
     bool IsMouseButtonPressed(MouseButton button);
     bool isMouseButtonReleased(MouseButton button);
 
-    // Callbacks need to be static to be used by GLFW
-    static void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
-    static void MouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
-    static void CursorPositionCallback(GLFWwindow* window, double xpos, double ypos);
-    
 private:
     GLFWwindow* m_window;
 

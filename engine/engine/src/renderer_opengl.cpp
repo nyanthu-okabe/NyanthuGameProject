@@ -156,7 +156,8 @@ void RendererBGFX::drawCube(const glm::mat4& modelMatrix) {
     // Placeholder
 }
 
-void RendererBGFX::beginFrame() {
+void RendererBGFX::beginFrame(const Camera& camera) {
+    (void)camera; // Unused in this placeholder
     // Placeholder
 }
 

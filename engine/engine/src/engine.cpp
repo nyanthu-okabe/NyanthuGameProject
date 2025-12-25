@@ -23,7 +23,11 @@ static void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 Engine::Engine() : m_window(nullptr) {}
 
 Engine::~Engine() {
-    // shutdown should be called explicitly
+    if (m_audio) m_audio->shutdown();
+    if (m_renderer) m_renderer->shutdown();
+    if (m_window) glfwDestroyWindow(m_window);
+    glfwTerminate();
+    std::cout << "Engine shutdown" << std::endl;
 }
 
 void Engine::init() {
@@ -66,14 +70,6 @@ void Engine::init() {
 
     m_isRunning = true;
     std::cout << "Engine initialized" << std::endl;
-}
-
-void Engine::shutdown() {
-    m_audio->shutdown();
-    m_renderer->shutdown();
-    glfwDestroyWindow(m_window);
-    glfwTerminate();
-    std::cout << "Engine shutdown" << std::endl;
 }
 
 bool Engine::isRunning() {

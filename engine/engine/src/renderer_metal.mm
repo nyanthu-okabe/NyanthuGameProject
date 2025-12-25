@@ -268,15 +268,18 @@ public:
     }
 };
 
-RendererMetal::RendererMetal() : _impl(nullptr) {}
-RendererMetal::~RendererMetal() { shutdown(); }
+RendererMetal::RendererMetal() = default;
+RendererMetal::~RendererMetal() = default;
 
 bool RendererMetal::initialize(GLFWwindow* window, uint32_t width, uint32_t height) {
-    _impl = new RendererMetalImpl(window, width, height);
+    _impl = std::make_unique<RendererMetalImpl>(window, width, height);
     return _impl != nullptr && _impl->_device != nil;
 }
 
-void RendererMetal::shutdown() { if (_impl) { delete _impl; _impl = nullptr; } }
+void RendererMetal::shutdown() {
+    // The unique_ptr will handle the deletion of _impl
+    _impl.reset();
+}
 void RendererMetal::beginFrame(const Camera& camera) { if (_impl) _impl->beginFrame(camera); }
 void RendererMetal::endFrame() { if (_impl) _impl->endFrame(); }
 void RendererMetal::resize(uint32_t width, uint32_t height) { if (_impl) _impl->resize(width, height); }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "renderer.h"
+#include <memory>
 
 // Forward declare GLFWwindow
 struct GLFWwindow;
@@ -16,7 +17,7 @@ public:
     ~RendererMetal() override;
 
     bool initialize(GLFWwindow* window, uint32_t width, uint32_t height) override;
-    void shutdown() override;
+    void shutdown() override; // Keep for interface, but will be empty.
 
     void beginFrame(const Camera& camera) override;
     void endFrame() override;
@@ -27,7 +28,7 @@ public:
     void resize(uint32_t width, uint32_t height) override;
 
 private:
-    class RendererMetalImpl* _impl;
+    std::unique_ptr<RendererMetalImpl> _impl;
 };
 
 } // namespace nyanchu
