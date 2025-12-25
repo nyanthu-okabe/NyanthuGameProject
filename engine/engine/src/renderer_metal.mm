@@ -2,6 +2,7 @@
 #include "platform/platform_utils.h"
 #include <iostream>
 #include <unordered_map>
+#include <vector>
 
 #define GLM_FORCE_RADIANS
 #include <glm/glm.hpp>
@@ -49,6 +50,11 @@ public:
     // Buffers
     id<MTLBuffer> _uniformBuffer;
     std::unordered_map<const Mesh*, MeshBuffers> _meshBuffers;
+    
+    // Cube-specific buffers
+    id<MTLBuffer> _cubeVertexBuffer;
+    id<MTLBuffer> _cubeIndexBuffer;
+    NSUInteger _cubeIndexCount;
 
 
     RendererMetalImpl(GLFWwindow* window, uint32_t width, uint32_t height) : _width(width), _height(height) {
@@ -72,8 +78,44 @@ public:
 
         setupMeshPipeline();
         setupDepthBuffer();
+        setupCubeBuffers();
 
         _uniformBuffer = [_device newBufferWithLength:sizeof(Uniforms) options:MTLResourceStorageModeShared];
+    }
+    
+    void setupCubeBuffers() {
+        const Vertex vertices[] = {
+            // Front face
+            { {-0.5f, -0.5f,  0.5f} },
+            { { 0.5f, -0.5f,  0.5f} },
+            { { 0.5f,  0.5f,  0.5f} },
+            { {-0.5f,  0.5f,  0.5f} },
+            // Back face
+            { {-0.5f, -0.5f, -0.5f} },
+            { {-0.5f,  0.5f, -0.5f} },
+            { { 0.5f,  0.5f, -0.5f} },
+            { { 0.5f, -0.5f, -0.5f} },
+        };
+
+        const uint32_t indices[] = {
+            // Front
+            0, 1, 2, 2, 3, 0,
+            // Right
+            1, 7, 6, 6, 2, 1,
+            // Back
+            7, 4, 5, 5, 6, 7,
+            // Left
+            4, 0, 3, 3, 5, 4,
+            // Top
+            3, 2, 6, 6, 5, 3,
+            // Bottom
+            4, 7, 1, 1, 0, 4
+        };
+        
+        _cubeIndexCount = sizeof(indices) / sizeof(indices[0]);
+        
+        _cubeVertexBuffer = [_device newBufferWithBytes:vertices length:sizeof(vertices) options:MTLResourceStorageModeShared];
+        _cubeIndexBuffer = [_device newBufferWithBytes:indices length:sizeof(indices) options:MTLResourceStorageModeShared];
     }
 
     void setupMeshPipeline() {
@@ -204,6 +246,21 @@ public:
                                      indexBuffer:buffers.indexBuffer
                                indexBufferOffset:0];
     }
+
+    void drawCube(const glm::mat4& modelMatrix) {
+        if (!_commandEncoder) return;
+
+        updateUniforms(modelMatrix);
+
+        [_commandEncoder setRenderPipelineState:_meshPipelineState];
+        [_commandEncoder setVertexBuffer:_cubeVertexBuffer offset:0 atIndex:0];
+        [_commandEncoder setVertexBuffer:_uniformBuffer offset:0 atIndex:1];
+        [_commandEncoder drawIndexedPrimitives:MTLPrimitiveTypeTriangle
+                                      indexCount:_cubeIndexCount
+                                       indexType:MTLIndexTypeUInt32
+                                     indexBuffer:_cubeIndexBuffer
+                               indexBufferOffset:0];
+    }
 };
 
 RendererMetal::RendererMetal() : _impl(nullptr) {}
@@ -220,6 +277,6 @@ void RendererMetal::endFrame() { if (_impl) _impl->endFrame(); }
 void RendererMetal::resize(uint32_t width, uint32_t height) { if (_impl) _impl->resize(width, height); }
 void RendererMetal::drawMesh(const Mesh& mesh, const glm::mat4& modelMatrix) { if (_impl) _impl->drawMesh(mesh, modelMatrix); }
 void RendererMetal::drawTriangle() { /* Not implemented */ }
-void RendererMetal::drawCube(const glm::mat4& modelMatrix) { /* Not implemented */ }
+void RendererMetal::drawCube(const glm::mat4& modelMatrix) { if (_impl) _impl->drawCube(modelMatrix); }
 
 } // namespace nyanchu
