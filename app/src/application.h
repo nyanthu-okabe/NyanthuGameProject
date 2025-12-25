@@ -4,6 +4,16 @@
 #include <nyanchu/mesh.h>
 #include <memory>
 
+/*
+ * Nyanthu Okabe 2025-12-25
+ *
+ * Copyright (c) 2025 nyanthu.com
+ * All rights reserved.
+ *
+ * Do not modify or copy without permission.
+ */
+
+
 class Application
 {
 public:

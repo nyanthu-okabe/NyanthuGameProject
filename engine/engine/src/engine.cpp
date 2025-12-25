@@ -9,6 +9,20 @@
 #include "nyanchu/renderer_opengl.h"
 #endif
 
+#define CREDIT(text) "\033[34m" text "\033[0m"
+#define SUCCESS(text) "\033[33m" text "\033[0m"
+#define ERROR(text) "\033[31m" text "\033[0m"
+
+/*
+ * Nyanthu Okabe 2025-12-25
+ *
+ * Copyright (c) 2025 nyanthu.com
+ * All rights reserved.
+ *
+ * Do not modify or copy without permission.
+ */
+
+
 namespace nyanchu {
 
 // GLFW framebuffer resize callback
@@ -27,19 +41,38 @@ Engine::~Engine() {
     if (m_renderer) m_renderer->shutdown();
     if (m_window) glfwDestroyWindow(m_window);
     glfwTerminate();
-    std::cout << "Engine shutdown" << std::endl;
+    std::cout << SUCCESS("Engine shutdown") << std::endl;
 }
 
 void Engine::init() {
+    std::cout << CREDIT( R"(
+    _  _               _   _          ___           _
+    | \| |_  _ __ _ _ _| |_| |_ _  _  | __|_ _  __ _(_)_ _  ___
+    | .` | || / _` | ' \  _| ' \ || | | _|| ' \/ _` | | ' \/ -_)
+    |_|\_|\_, \__,_|_||_\__|_||_\_,_| |___|_||_\__, |_|_||_\___|
+            |__/                                 |___/
+     === Nyanchu Engine (49f18f6) ===
+     * Nyanthu Okabe 2025-12-25
+     *
+     * This project uses NyanchuEngine
+     * The engine is private
+     *
+     * Copyright (c) 2025 nyanthu.com
+     * All rights reserved.
+     *
+     * Do not modify or copy without permission.
+     *
+    )") << std::endl;
+
     if (!glfwInit()) {
-        std::cerr << "Failed to initialize GLFW" << std::endl;
+        std::cerr << ERROR("Failed to initialize GLFW") << std::endl;
         return;
     }
 
     // For now, let's create a window here. This might be configurable later.
     m_window = glfwCreateWindow(800, 600, "Nyanthu Engine", NULL, NULL);
     if (!m_window) {
-        std::cerr << "Failed to create GLFW window" << std::endl;
+        std::cerr << ERROR("Failed to create GLFW window") << std::endl;
         glfwTerminate();
         return;
     }
@@ -55,7 +88,7 @@ void Engine::init() {
     m_renderer = std::make_unique<RendererBGFX>();
 #endif
     if (!m_renderer->initialize(m_window, 800, 600)) {
-        std::cerr << "Failed to initialize Renderer" << std::endl;
+        std::cerr << ERROR("Failed to initialize Renderer") << std::endl;
         return;
     }
 
@@ -69,7 +102,7 @@ void Engine::init() {
     m_resourceDir = getExecutableDir();
 
     m_isRunning = true;
-    std::cout << "Engine initialized" << std::endl;
+    std::cout << SUCCESS("Engine initialized") << std::endl;
 }
 
 bool Engine::isRunning() {

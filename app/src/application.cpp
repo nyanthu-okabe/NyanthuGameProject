@@ -1,3 +1,15 @@
+/*
+ * Nyanthu Okabe 2025-12-25
+ *
+ * This project uses NyanchuEngine
+ * The engine is private
+ *
+ * Copyright (c) 2025 nyanthu.com
+ * All rights reserved.
+ *
+ * Do not modify or copy without permission.
+ */
+
 #include "application.h"
 #include <iostream>
 #include <chrono>
@@ -6,6 +18,7 @@
 #define GLM_FORCE_RADIANS
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+
 
 Application::Application()
 {
@@ -38,7 +51,6 @@ void Application::run()
     auto lastFrameTime = clock::now();
 
     // For FPS calculation
-    int frameCount = 0;
     float timeAccumulator = 0.0f;
 
     float cameraSpeed = 2.5f;
@@ -58,16 +70,20 @@ void Application::run()
         {
             auto& input = m_engine->getInput();
             auto& camera = m_engine->getCamera();
+            glm::vec3 front(camera.getFront().x, 0.0f, camera.getFront().z);
+            front = glm::normalize(front); // 念のため正規化
 
-            // Movement
+            glm::vec3 right = glm::normalize(glm::cross(front, glm::vec3(0.0f, 1.0f, 0.0f)));
+
             if (input.IsKeyDown(GLFW_KEY_W))
-                camera.MoveCamera(camera.getFront() * cameraSpeed * deltaTime);
+                camera.MoveCamera(front * cameraSpeed * deltaTime);
             if (input.IsKeyDown(GLFW_KEY_S))
-                camera.MoveCamera(-camera.getFront() * cameraSpeed * deltaTime);
+                camera.MoveCamera(-front * cameraSpeed * deltaTime);
             if (input.IsKeyDown(GLFW_KEY_A))
-                camera.MoveCamera(-camera.getRight() * cameraSpeed * deltaTime);
+                camera.MoveCamera(-right * cameraSpeed * deltaTime);
             if (input.IsKeyDown(GLFW_KEY_D))
-                camera.MoveCamera(camera.getRight() * cameraSpeed * deltaTime);
+                camera.MoveCamera(right * cameraSpeed * deltaTime);
+
 
             if (input.IsKeyDown(GLFW_KEY_Q))
                 m_engine->cursor_able();
@@ -97,15 +113,5 @@ void Application::run()
         // --- End Drawing ---
 
         m_engine->endFrame();
-
-        // --- FPS Calculation ---
-        timeAccumulator += deltaTime;
-        frameCount++;
-        if (timeAccumulator >= 1.0f)
-        {
-            std::cout << "FPS: " << frameCount << std::endl;
-            frameCount = 0;
-            timeAccumulator -= 1.0f;
-        }
     }
 }
