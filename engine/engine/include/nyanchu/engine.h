@@ -33,6 +33,9 @@ public:
 
     void resize(int width, int height);
 
+    void cursor_disable();
+    void cursor_able();
+
 private:
     const std::string& getResourceDir() const;
 

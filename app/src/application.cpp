@@ -27,6 +27,8 @@ bool Application::initialize()
 
     m_engine->playBgm("materials/bgm.wav");
     m_mesh = std::make_unique<nyanchu::Mesh>(modelPath.c_str());
+
+    m_engine->cursor_disable();
     return true;
 }
 
@@ -34,20 +36,22 @@ void Application::run()
 {
     using clock = std::chrono::high_resolution_clock;
     auto lastFrameTime = clock::now();
-    
+
     // For FPS calculation
     int frameCount = 0;
     float timeAccumulator = 0.0f;
-    
+
     float cameraSpeed = 2.5f;
     float mouseSensitivity = 0.1f;
 
+
+    float frame = 0.0f;
     while (m_engine->isRunning())
     {
         auto currentTime = clock::now();
         float deltaTime = std::chrono::duration<float>(currentTime - lastFrameTime).count();
         lastFrameTime = currentTime;
-        
+
         m_engine->pollEvents();
 
         // --- Input and Camera Control ---
@@ -64,7 +68,10 @@ void Application::run()
                 camera.MoveCamera(-camera.getRight() * cameraSpeed * deltaTime);
             if (input.IsKeyDown(GLFW_KEY_D))
                 camera.MoveCamera(camera.getRight() * cameraSpeed * deltaTime);
-                
+
+            if (input.IsKeyDown(GLFW_KEY_Q))
+                m_engine->cursor_able();
+
             // Rotation
             glm::vec2 mouseDelta = input.GetMouseDelta();
             if (glm::length(mouseDelta) > 0.01f) {
@@ -75,19 +82,20 @@ void Application::run()
         // --- End Input and Camera Control ---
 
         m_engine->beginFrame();
-        
+
         // --- Drawing ---
         {
             // The object now stays at the origin, the camera moves around it
             glm::mat4 model = glm::mat4(1.0f);
             m_engine->getRenderer().drawMesh(*m_mesh, model);
-            
+
             // Draw a cube slightly offset to see it
-            model = glm::translate(glm::mat4(1.0f), glm::vec3(2.0f, 0.0f, 0.0f));
+            model = glm::translate(glm::mat4(1.0f), glm::vec3(2.0f, 2.0f, 4.0f));
             m_engine->getRenderer().drawCube(model);
+
         }
         // --- End Drawing ---
-        
+
         m_engine->endFrame();
 
         // --- FPS Calculation ---
@@ -101,4 +109,3 @@ void Application::run()
         }
     }
 }
-

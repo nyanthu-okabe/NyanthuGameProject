@@ -94,6 +94,14 @@ void Engine::resize(int width, int height) {
     m_renderer->resize(width, height);
 }
 
+void Engine::cursor_disable(){
+    glfwSetInputMode(m_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+}
+
+void Engine::cursor_able(){
+    glfwSetInputMode(m_window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+}
+
 IRenderer& Engine::getRenderer() {
     return *m_renderer;
 }
