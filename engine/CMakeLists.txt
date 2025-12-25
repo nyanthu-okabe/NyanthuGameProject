@@ -54,6 +54,8 @@ add_library(nyanthu_engine
     engine/src/audio_miniaudio.cpp
     engine/src/physics_jolt.cpp
     engine/src/mesh.cpp
+    engine/src/camera.cpp
+    engine/src/input.cpp
 )
 
 if (APPLE)

@@ -1,4 +1,5 @@
 #include "nyanchu/renderer_metal.h"
+#include "nyanchu/camera.h"
 #include "platform/platform_utils.h"
 #include <iostream>
 #include <unordered_map>
@@ -55,6 +56,9 @@ public:
     id<MTLBuffer> _cubeVertexBuffer;
     id<MTLBuffer> _cubeIndexBuffer;
     NSUInteger _cubeIndexCount;
+    
+    // Per-frame camera state
+    glm::mat4 _viewMatrix;
 
 
     RendererMetalImpl(GLFWwindow* window, uint32_t width, uint32_t height) : _width(width), _height(height) {
@@ -171,7 +175,9 @@ public:
 
     ~RendererMetalImpl() {}
 
-    void beginFrame() {
+    void beginFrame(const Camera& camera) {
+        _viewMatrix = camera.getViewMatrix();
+        
         _pool = [[NSAutoreleasePool alloc] init];
         _drawable = [_metalLayer nextDrawable];
         if (!_drawable) return;
@@ -213,10 +219,9 @@ public:
         if (_width == 0 || _height == 0) return;
         float aspect = (float)_width / (float)_height;
         glm::mat4 proj = glm::perspective(glm::radians(60.0f), aspect, 0.1f, 100.0f);
-        glm::mat4 view = glm::lookAt(glm::vec3(0, 2, -5), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
 
         Uniforms uniforms;
-        uniforms.mvp = proj * view * model;
+        uniforms.mvp = proj * _viewMatrix * model;
         memcpy([_uniformBuffer contents], &uniforms, sizeof(uniforms));
     }
 
@@ -272,7 +277,7 @@ bool RendererMetal::initialize(GLFWwindow* window, uint32_t width, uint32_t heig
 }
 
 void RendererMetal::shutdown() { if (_impl) { delete _impl; _impl = nullptr; } }
-void RendererMetal::beginFrame() { if (_impl) _impl->beginFrame(); }
+void RendererMetal::beginFrame(const Camera& camera) { if (_impl) _impl->beginFrame(camera); }
 void RendererMetal::endFrame() { if (_impl) _impl->endFrame(); }
 void RendererMetal::resize(uint32_t width, uint32_t height) { if (_impl) _impl->resize(width, height); }
 void RendererMetal::drawMesh(const Mesh& mesh, const glm::mat4& modelMatrix) { if (_impl) _impl->drawMesh(mesh, modelMatrix); }

@@ -11,6 +11,8 @@ struct GLFWwindow;
 
 namespace nyanchu {
 
+class Camera;
+
 // Abstract base class for renderers
 class IRenderer
 {
@@ -20,7 +22,7 @@ public:
     virtual bool initialize(GLFWwindow* window, uint32_t width, uint32_t height) = 0;
     virtual void shutdown() = 0;
 
-    virtual void beginFrame() = 0;
+    virtual void beginFrame(const Camera& camera) = 0;
     virtual void endFrame() = 0;
 
     virtual void drawMesh(const Mesh& mesh, const glm::mat4& modelMatrix) = 0;

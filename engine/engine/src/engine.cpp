@@ -45,7 +45,7 @@ void Engine::init() {
     glfwSetWindowUserPointer(m_window, this);
     glfwSetFramebufferSizeCallback(m_window, framebuffer_size_callback);
 
-    #ifdef __APPLE__
+#ifdef __APPLE__
     m_renderer = std::make_unique<RendererMetal>();
 #else
     m_renderer = std::make_unique<RendererBGFX>();
@@ -57,6 +57,10 @@ void Engine::init() {
 
     m_audio = std::make_unique<Audio>();
     m_audio->init();
+
+    m_camera = std::make_unique<Camera>();
+    m_input = std::make_unique<Input>(m_window);
+
 
     m_resourceDir = getExecutableDir();
 
@@ -78,10 +82,11 @@ bool Engine::isRunning() {
 
 void Engine::pollEvents() {
     glfwPollEvents();
+    m_input->update();
 }
 
 void Engine::beginFrame() {
-    m_renderer->beginFrame();
+    m_renderer->beginFrame(*m_camera);
 }
 
 void Engine::endFrame() {
@@ -95,6 +100,14 @@ void Engine::resize(int width, int height) {
 
 IRenderer& Engine::getRenderer() {
     return *m_renderer;
+}
+
+Camera& Engine::getCamera() {
+    return *m_camera;
+}
+
+Input& Engine::getInput() {
+    return *m_input;
 }
 
 void Engine::playBgm(const std::string& soundName) {
